@@ -1,0 +1,9 @@
+{
+    "name": "apt install",
+    "id": "apt",
+    "version": "0.0.1",
+    "description": "A feature to install the necessary apt packages",
+    "installsAfter": [
+      "ghcr.io/devcontainers/features/rust"
+    ]
+}

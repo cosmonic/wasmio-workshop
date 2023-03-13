@@ -1,0 +1,10 @@
+{
+    "name": "cosmo CLI",
+    "id": "cosmo",
+    "version": "0.0.1",
+    "description": "A feature to install the cosmo cli",
+    "installsAfter": [
+      "ghcr.io/devcontainers/features/rust",
+      "./apt-install"
+    ]
+}

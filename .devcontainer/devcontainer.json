@@ -1,0 +1,14 @@
+{
+	"name": "wasmio-workshop",
+	"image": "mcr.microsoft.com/devcontainers/base:bullseye",
+	"features": {
+		"ghcr.io/devcontainers/features/rust:1": {
+			"version": "latest"
+		},
+    "./apt-install": {},
+    "./wash-install": {},
+    "./cosmo-install": {}
+	},
+	"workspaceMount": "source=${localWorkspaceFolder},target=/workshop,type=bind,consistency=cached",
+	"workspaceFolder": "/workshop"
+}
