@@ -4,8 +4,14 @@
 	"features": {
 		"./apt-install": {},
 		"./wash-install": {},
-		"./cosmo-install": {}
+		"./cosmo-install": {},
+		"./wasm-install": {}
 	},
 	"workspaceMount": "source=${localWorkspaceFolder},target=/workshop,type=bind,consistency=cached",
-	"workspaceFolder": "/workshop"
+	"workspaceFolder": "/workshop",
+	"forwardPorts": [
+		4000, // wash wasmCloud dashboard
+		8080, // TODO app port
+		22000 // cosmo wasmCloud dashboard
+	]
 }
