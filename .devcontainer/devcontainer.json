@@ -1,8 +1,7 @@
 {
 	"name": "wasmio-workshop",
-	"image": "debian:bookworm",
+	"image": "mcr.microsoft.com/vscode/devcontainers/rust:bullseye",
 	"features": {
-		"ghcr.io/devcontainers/features/rust:1": {},
 		"./apt-install": {},
 		"./wash-install": {},
 		"./cosmo-install": {},
@@ -14,5 +13,6 @@
 		4000, // wash wasmCloud dashboard
 		8080, // Todo app port
 		22000 // cosmo wasmCloud dashboard
-	]
+	],
+  "postCreateCommand": "sudo chown -R vscode /home/vscode/.cosmo"
 }
