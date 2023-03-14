@@ -1,13 +1,8 @@
 [package]
-authors = [
-  "Aayush Attri <aayush.attri@red-badger.com>",
-  "Chris Whealy <chris.whealy@red-badger.com>",
-  "David Laban <david.laban@red-badger.com>",
-  "Stuart Harris <stuart.harris@red-badger.com>",
-]
+authors = ["Cosmonic Team"]
 edition = "2021"
 name = "todo"
-version = "0.3.6"
+version = "0.1.0"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -16,15 +11,20 @@ crate-type = ["cdylib", "rlib"]
 anyhow = "1.0.41"
 async-trait = "0.1"
 futures = "0.3"
-serde = {version = "1.0", features = ["derive"]}
+serde = { version = "1.0", features = ["derive"] }
 serde_bytes = "0.11"
 serde_json = "1.0"
-wasmbus-rpc = "0.10.1"
-wasmcloud-interface-httpserver = "0.7.0"
-wasmcloud-interface-keyvalue = "0.8.0"
-wasmcloud-interface-logging = "0.7.0"
+# wasmCloud SDKs
+wasmbus-rpc = "0.11.2"
+wasmcloud-interface-httpserver = "0.9.0"
+wasmcloud-interface-keyvalue = "0.9.1"
+wasmcloud-interface-logging = "0.8.1"
+# Required for UI assets
+rust-embed = "6.3.0"
+mime_guess = "2"
 
 [profile.release]
-# Optimize for small code size
+strip = true
 lto = true
+# Optimize for small code size
 opt-level = "s"

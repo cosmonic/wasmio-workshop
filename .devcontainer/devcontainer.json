@@ -4,8 +4,15 @@
 	"features": {
 		"./apt-install": {},
 		"./wash-install": {},
-		"./cosmo-install": {}
+		"./cosmo-install": {},
+		"./wasm-install": {}
 	},
 	"workspaceMount": "source=${localWorkspaceFolder},target=/workshop,type=bind,consistency=cached",
-	"workspaceFolder": "/workshop"
+	"workspaceFolder": "/workshop",
+	"forwardPorts": [
+		4000, // wash wasmCloud dashboard
+		8080, // Todo app port
+		22000 // cosmo wasmCloud dashboard
+	],
+  "postCreateCommand": "sudo chown -R vscode /home/vscode/.cosmo"
 }

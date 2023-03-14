@@ -6,20 +6,110 @@ use wasmcloud_interface_keyvalue::{
     IncrementRequest, KeyValue, KeyValueSender, SetAddRequest, SetDelRequest, SetRequest,
 };
 use wasmcloud_interface_logging::{debug, info, warn};
+mod ui;
+
+#[derive(Debug, Default, Actor, HealthResponder)]
+#[services(Actor, HttpServer)]
+/// An actor that receives RESTful HTTP API queries and stores proper requests as
+/// Todo objects in a Key-Value store
+pub struct TodoActor {}
+
+/// Implementation of HttpServer contract, receive HttpRequest return HttpResponse
+///
+/// # Arguments
+/// * `ctx` - The wasmCloud context object. Largely this is used for metadata and can simply be passed around
+/// * `req` - HTTP request sent from an HTTP server
+///  
+/// # Returns
+/// * `RpcResult<HttpResponse>` - Standard result type wrapping an HTTP response struct
+#[async_trait]
+impl HttpServer for TodoActor {
+    async fn handle_request(&self, ctx: &Context, req: &HttpRequest) -> RpcResult<HttpResponse> {
+        handle_todo_request(ctx, req).await
+    }
+}
+
+/// Handles an HTTP request as a Todo RESTful API query
+///
+/// # Arguments
+/// * `req` - HTTP request sent from an HTTP server
+///  
+/// # Returns
+/// * `RpcResult<HttpResponse>` - Standard result type wrapping an HTTP response struct
+pub async fn handle_todo_request(ctx: &Context, req: &HttpRequest) -> RpcResult<HttpResponse> {
+    debug!("incoming req: {:?}", req);
+
+    let trimmed_path = req.path.trim_end_matches('/');
+    match (req.method.as_ref(), trimmed_path) {
+        ("GET", "") => ui::get_asset(&req.path).await,
+        ("POST", "/api") => match serde_json::from_slice(&req.body) {
+            Ok(input) => match create_todo(ctx, input).await {
+                Ok(todo) => HttpResponse::json(todo, 200),
+                Err(e) => Err(RpcError::ActorHandler(format!("creating todo: {:?}", e))),
+            },
+            Err(e) => Ok(HttpResponse::bad_request(format!(
+                "malformed body: {:?}",
+                e
+            ))),
+        },
+
+        ("GET", "/api") => match get_all_todos(ctx).await {
+            Ok(todos) => HttpResponse::json(todos, 200),
+            Err(e) => Err(RpcError::ActorHandler(format!("getting all todos: {}", e))),
+        },
+
+        ("GET", url) => match get_todo(ctx, url).await {
+            Ok(todo) => HttpResponse::json(todo, 200),
+            // Fallback, attempt to get assets for a GET request that isn't a Todo
+            Err(_) => ui::get_asset(&req.path).await,
+        },
+
+        ("PATCH", url) => match serde_json::from_slice(&req.body) {
+            Ok(update) => match update_todo(ctx, url, update).await {
+                Ok(todo) => HttpResponse::json(todo, 200),
+                Err(e) => Err(RpcError::ActorHandler(format!("updating todo: {}", e))),
+            },
+            Err(e) => Ok(HttpResponse::bad_request(format!(
+                "malformed body: {:?}",
+                e
+            ))),
+        },
+
+        ("DELETE", "/api") => match delete_all_todos(ctx).await {
+            Ok(_) => Ok(HttpResponse::default()),
+            Err(e) => Err(RpcError::ActorHandler(format!("deleting all todos: {}", e))),
+        },
+
+        ("DELETE", url) => match delete_todo(ctx, url).await {
+            Ok(_) => Ok(HttpResponse::default()),
+            Err(e) => Err(RpcError::ActorHandler(format!("deleting todo: {}", e))),
+        },
+
+        (_, _) => {
+            warn!("no route for this request: {:?}", req);
+            Ok(HttpResponse::not_found())
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize)]
-struct InputTodo {
+/// Incoming HTTP payload to create a Todo item
+pub struct InputTodo {
     title: String,
     order: Option<i32>,
 }
+
 #[derive(Serialize, Deserialize)]
-struct UpdateTodo {
+/// Incoming HTTP payload to update a Todo item
+pub struct UpdateTodo {
     title: Option<String>,
     completed: Option<bool>,
     order: Option<i32>,
 }
+
 #[derive(Serialize, Deserialize)]
-struct Todo {
+/// Todo structure as stored in a Key-Value store
+pub struct Todo {
     url: String,
     title: String,
     completed: bool,
@@ -36,6 +126,7 @@ impl Todo {
         }
     }
 
+    /// Updates a Todo given optional parameters to change title, completed, or order
     fn update(self, update: UpdateTodo) -> Todo {
         Todo {
             url: self.url,
@@ -46,7 +137,15 @@ impl Todo {
     }
 }
 
-async fn create_todo(ctx: &Context, input: InputTodo) -> Result<Todo> {
+/// Creates a Todo entry in a Key-Value store, adding it both as an entry with a unique ID
+/// and into a set of all Todos for easy management
+///
+/// # Arguments
+/// * `input` - [InputTodo] struct to create
+///  
+/// # Returns
+/// * `Result<Todo>` - Created [Todo] struct
+pub async fn create_todo(ctx: &Context, input: InputTodo) -> Result<Todo> {
     info!("Creating a todo...");
     let id = KeyValueSender::new()
         .increment(
@@ -91,7 +190,14 @@ async fn create_todo(ctx: &Context, input: InputTodo) -> Result<Todo> {
     Ok(todo)
 }
 
-async fn update_todo(ctx: &Context, url: &str, update: UpdateTodo) -> Result<Todo> {
+/// Updates a Todo entry in a Key-Value store
+///
+/// # Arguments
+/// * `update` - [UpdateTodo] struct to override an existing Todo
+///  
+/// # Returns
+/// * `Result<Todo>` - Updated [Todo] struct
+pub async fn update_todo(ctx: &Context, url: &str, update: UpdateTodo) -> Result<Todo> {
     info!("Updating a todo...");
 
     let todo = get_todo(ctx, url).await?;
@@ -111,7 +217,11 @@ async fn update_todo(ctx: &Context, url: &str, update: UpdateTodo) -> Result<Tod
     Ok(todo)
 }
 
-async fn get_all_todos(ctx: &Context) -> Result<Vec<Todo>> {
+/// Retrieves all Todos stored in the Key-Value store
+///
+/// # Returns
+/// * `Result<Vec<Todo>>` - All Todos
+pub async fn get_all_todos(ctx: &Context) -> Result<Vec<Todo>> {
     info!("Getting all todos...");
 
     let urls = KeyValueSender::new()
@@ -126,7 +236,14 @@ async fn get_all_todos(ctx: &Context) -> Result<Vec<Todo>> {
     Ok(result)
 }
 
-async fn get_todo(ctx: &Context, url: &str) -> Result<Todo> {
+/// Retrieves a single Todo from the Key-Value store
+///
+/// # Arguments
+/// * `url` - The RESTful API path to the Todo id
+///  
+/// # Returns
+/// * `Result<Todo>` - [Todo] struct, if found
+pub async fn get_todo(ctx: &Context, url: &str) -> Result<Todo> {
     info!("Getting a todo...");
 
     let todo_str = KeyValueSender::new()
@@ -139,7 +256,8 @@ async fn get_todo(ctx: &Context, url: &str) -> Result<Todo> {
     Ok(todo)
 }
 
-async fn delete_all_todos(ctx: &Context) -> Result<()> {
+/// Deletes all Todos from the Key-Value store
+pub async fn delete_all_todos(ctx: &Context) -> Result<()> {
     info!("Deleting all todos...");
 
     let urls = KeyValueSender::new()
@@ -154,7 +272,11 @@ async fn delete_all_todos(ctx: &Context) -> Result<()> {
     Ok(())
 }
 
-async fn delete_todo(ctx: &Context, url: &str) -> Result<()> {
+/// Deletes a single Todo from the Key-Value store
+///
+/// # Arguments
+/// * `url` - The RESTful API path to the Todo id
+pub async fn delete_todo(ctx: &Context, url: &str) -> Result<()> {
     info!("Deleting a todo...");
 
     KeyValueSender::new()
@@ -174,75 +296,4 @@ async fn delete_todo(ctx: &Context, url: &str) -> Result<()> {
         .map_err(|e| anyhow!(e))?;
 
     Ok(())
-}
-
-async fn handle_request(ctx: &Context, req: &HttpRequest) -> RpcResult<HttpResponse> {
-    debug!("incoming req: {:?}", req);
-
-    let trimmed_path = req.path.trim_end_matches('/');
-    match (req.method.as_ref(), trimmed_path) {
-        ("GET", "") => Ok(HttpResponse {
-            body: "todo server lives at /api".to_string().into_bytes(),
-            ..Default::default()
-        }),
-
-        ("POST", "/api") => match serde_json::from_slice(&req.body) {
-            Ok(input) => match create_todo(ctx, input).await {
-                Ok(todo) => HttpResponse::json(todo, 200),
-                Err(e) => Err(RpcError::ActorHandler(format!("creating todo: {:?}", e))),
-            },
-            Err(e) => Ok(HttpResponse::bad_request(format!(
-                "malformed body: {:?}",
-                e
-            ))),
-        },
-
-        ("GET", "/api") => match get_all_todos(ctx).await {
-            Ok(todos) => HttpResponse::json(todos, 200),
-            Err(e) => Err(RpcError::ActorHandler(format!("getting all todos: {}", e))),
-        },
-
-        ("GET", url) => match get_todo(ctx, url).await {
-            Ok(todo) => HttpResponse::json(todo, 200),
-            Err(_) => Ok(HttpResponse::not_found()),
-        },
-
-        ("PATCH", url) => match serde_json::from_slice(&req.body) {
-            Ok(update) => match update_todo(ctx, url, update).await {
-                Ok(todo) => HttpResponse::json(todo, 200),
-                Err(e) => Err(RpcError::ActorHandler(format!("updating todo: {}", e))),
-            },
-            Err(e) => Ok(HttpResponse::bad_request(format!(
-                "malformed body: {:?}",
-                e
-            ))),
-        },
-
-        ("DELETE", "/api") => match delete_all_todos(ctx).await {
-            Ok(_) => Ok(HttpResponse::default()),
-            Err(e) => Err(RpcError::ActorHandler(format!("deleting all todos: {}", e))),
-        },
-
-        ("DELETE", url) => match delete_todo(ctx, url).await {
-            Ok(_) => Ok(HttpResponse::default()),
-            Err(e) => Err(RpcError::ActorHandler(format!("deleting todo: {}", e))),
-        },
-
-        (_, _) => {
-            warn!("no route for this request: {:?}", req);
-            Ok(HttpResponse::not_found())
-        }
-    }
-}
-
-#[derive(Debug, Default, Actor, HealthResponder)]
-#[services(Actor, HttpServer)]
-struct TodoActor {}
-
-/// Implementation of HttpServer trait methods
-#[async_trait]
-impl HttpServer for TodoActor {
-    async fn handle_request(&self, ctx: &Context, req: &HttpRequest) -> RpcResult<HttpResponse> {
-        handle_request(ctx, req).await
-    }
 }
