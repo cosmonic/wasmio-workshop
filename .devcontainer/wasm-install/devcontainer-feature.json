@@ -2,5 +2,8 @@
     "name": "wasm target",
     "id": "wasm",
     "version": "0.0.1",
-    "description": "A feature to install the rust wasm target"
+    "description": "A feature to install the rust wasm target",
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/rust:1"
+    ]
 }

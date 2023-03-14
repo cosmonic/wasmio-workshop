@@ -1,7 +1,8 @@
 {
 	"name": "wasmio-workshop",
-	"image": "mcr.microsoft.com/vscode/devcontainers/rust:bullseye",
+	"image": "debian:bookworm",
 	"features": {
+		"ghcr.io/devcontainers/features/rust:1": {},
 		"./apt-install": {},
 		"./wash-install": {},
 		"./cosmo-install": {},
