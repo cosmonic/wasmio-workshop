@@ -1,0 +1,32 @@
+name: Build and test
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "todo/src/**"
+      - "todo/Cargo.*"
+env:
+  working-directory: todo
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Add wasm32-unknown-unknown
+        run: rustup target add wasm32-unknown-unknown
+      - name: Check formatting
+        working-directory: ${{ env.working-directory }}
+        run: cargo fmt -- --check
+        shell: bash
+      - name: Build actor
+        working-directory: ${{ env.working-directory }}
+        run: cargo build
+      - name: Check lints with clippy
+        working-directory: ${{ env.working-directory }}
+        run: |
+          rustup component add clippy
+          cargo clippy
+      # Once you've written unit tests for your actor, you can uncomment
+      # the two lines below to automatically run tests
+      # - name: Test actor
+      #   run: cargo test --target x86_64-unknown-linux-gnu -- --nocapture
