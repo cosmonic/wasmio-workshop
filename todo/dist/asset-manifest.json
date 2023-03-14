@@ -1,0 +1,10 @@
+{
+  "files": {
+    "main.js": "/static/js/main.9fe2da99.js",
+    "static/media/empty.svg": "/static/media/empty.c73c3c1281547d8e56d1a55dd92a682b.svg",
+    "index.html": "/index.html"
+  },
+  "entrypoints": [
+    "static/js/main.9fe2da99.js"
+  ]
+}

@@ -1,0 +1,23 @@
+# TODO: we want this?
+---
+  actors:
+    - wasmcloud.azurecr.io/echo:0.3.4
+  capabilities:
+    - image_ref: wasmcloud.azurecr.io/httpserver:0.17.0
+      link_name: default
+    - image_ref: wasmcloud.azurecr.io/kvredis:0.19.0
+      link_name: default
+  links:
+  # Test that TODO_ACTOR works
+    - actor: ${TODO_ACTOR:MBCFOPM6JW2APJLXJD3Z5O4CN7CPYJ2B4FTKLJUR5YR5MITIU7HD3WD5}
+      provider_id: VAG3QITQQ2ODAOWB5TTQSDJ53XK3SHBEIFNK4AYJ5RKAX2UNSCAPHA5M
+      contract_id: wasmcloud:httpserver
+      link_name: default
+      values:
+        address: 0.0.0.0:8080
+    - actor: ${TODO_ACTOR:MBCFOPM6JW2APJLXJD3Z5O4CN7CPYJ2B4FTKLJUR5YR5MITIU7HD3WD5}
+      provider_id: VAZVC4RX54J2NVCMCW7BPCAHGGG5XZXDBXFUMDUXGESTMQEJLC3YVZWB
+      contract_id: wasmcloud:keyvalue
+      link_name: default
+      values:
+        URL: redis://127.0.0.1:6379
