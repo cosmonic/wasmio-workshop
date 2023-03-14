@@ -10,10 +10,11 @@ This is a decently modified version of the [open source wasmCloud example](https
 ```
 wash build
 wash up -d
-# launch TODO actor from file (TODO: maybe we can really use the file thing?)
+# launch Todo actor from file (TODO: maybe we can really use the file thing?)
 wash ctl start provider wasmcloud.azurecr.io/httpserver:0.17.0
 wash ctl start provider wasmcloud.azurecr.io/kvredis:0.19.0
-# TODO: correct actor ID
-wash ctl link put MCFMFDWFHGKELOXPCNCDXKK5OFLHBVEWRAOXR5JSQUD2TOFRE3DFPM7E VAG3QITQQ2ODAOWB5TTQSDJ53XK3SHBEIFNK4AYJ5RKAX2UNSCAPHA5M wasmcloud:httpserver address=0.0.0.0:8080
-wash ctl link put MCFMFDWFHGKELOXPCNCDXKK5OFLHBVEWRAOXR5JSQUD2TOFRE3DFPM7E VAZVC4RX54J2NVCMCW7BPCAHGGG5XZXDBXFUMDUXGESTMQEJLC3YVZWB wasmcloud:keyvalue URL=redis://127.0.0.1:6379
+
+ACTOR_ID=$(wash claims inspect build/todo_s.wasm -o json | jq -r '.module')
+wash ctl link put $ACTOR_ID VAG3QITQQ2ODAOWB5TTQSDJ53XK3SHBEIFNK4AYJ5RKAX2UNSCAPHA5M wasmcloud:httpserver address=0.0.0.0:8080
+wash ctl link put $ACTOR_ID VAZVC4RX54J2NVCMCW7BPCAHGGG5XZXDBXFUMDUXGESTMQEJLC3YVZWB wasmcloud:keyvalue URL=redis://127.0.0.1:6379
 ```

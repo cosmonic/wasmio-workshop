@@ -4,8 +4,11 @@ use wasmcloud_interface_logging::debug;
 
 #[derive(rust_embed::RustEmbed)]
 #[folder = "./dist"]
-struct UiAsset;
+/// Helper struct that embeds UI static assets
+pub struct UiAsset;
 
+/// Given a path, retrieves a stored static asset for the Todo UI
+/// If one can't be found, this returns a 404 [HttpResponse]
 pub async fn get_asset(path: &str) -> RpcResult<HttpResponse> {
     let path = path.to_string();
     let trimmed = if path.trim() == "/" {
