@@ -7,10 +7,18 @@ This actor makes use of the HTTP server (`wasmcloud:httpserver`) capability, the
 This is a decently modified version of the [open source wasmCloud example](https://github.com/wasmCloud/examples/tree/main/actor/todo) contributed by the wonderful folks at [Red Badger](https://red-badger.com/).
 
 ## Running
+
+Ensure you've changed directory into this folder for these commands.
+
 ```
-wash build
-wash up -d
-# launch Todo actor from file (TODO: maybe we can really use the file thing?)
+cosmo up
+cosmo launch
+```
+
+Optionally, if you have [wash](https://wasmcloud.com/docs/installation) installed, you can run the following commands to start Redis and launch local capability providers for the Todo app.
+
+```
+redis-server &
 wash ctl start provider wasmcloud.azurecr.io/httpserver:0.17.0
 wash ctl start provider wasmcloud.azurecr.io/kvredis:0.19.0
 
