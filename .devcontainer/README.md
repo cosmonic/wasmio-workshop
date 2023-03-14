@@ -8,4 +8,3 @@ A simple devcontainer that has `rust`, `wash`, `cosmo`, and applicable toolchain
 
 TODO:
 - [ ] add npm for the todo UI build
-- [ ] expose ports for local access
