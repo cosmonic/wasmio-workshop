@@ -17,7 +17,10 @@ fn build_todo_ui() -> Result<(), Box<dyn std::error::Error>> {
 
     // npm install and build static assets
     std::env::set_current_dir("./ui")?;
-    handle_output(Command::new("npm").args(["install"]).output()?, "npm install")?;
+    handle_output(
+        Command::new("npm").args(["install"]).output()?,
+        "npm install",
+    )?;
     handle_output(
         Command::new("npm").args(["run", "build"]).output()?,
         "npm run build",
