@@ -15,19 +15,17 @@ fn build_todo_ui() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=./ui/public");
     println!("cargo:rerun-if-changed=./ui/package.json");
 
+    // npm install and build static assets
+    std::env::set_current_dir("./ui")?;
+    handle_output(Command::new("npm").args(["i"]).output()?, "npm ci --force")?;
     handle_output(
-        Command::new("npm")
-            .args(["ci", "--force", "--prefix", "ui"])
-            .output()?,
-        "npm ci --force",
-    )?;
-
-    handle_output(
-        Command::new("npm")
-            .args(["run", "build", "--prefix", "ui"])
-            .output()?,
+        Command::new("npm").args(["run", "build"]).output()?,
         "npm run build",
     )?;
+
+    // Move static assets up
+    std::fs::remove_dir_all("../dist")?;
+    std::fs::rename("./dist", "../dist")?;
 
     Ok(())
 }
