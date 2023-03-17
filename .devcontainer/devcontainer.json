@@ -2,6 +2,11 @@
 	"name": "wasmio-workshop",
 	"image": "mcr.microsoft.com/vscode/devcontainers/rust:bullseye",
 	"features": {
+		// Installed for optional Todo UI modification
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "16.15.0",
+			"nodeGypDependencies": "false"
+		},
 		"./apt-install": {},
 		"./wash-install": {},
 		"./cosmo-install": {},
@@ -10,9 +15,10 @@
 	"workspaceMount": "source=${localWorkspaceFolder},target=/workshop,type=bind,consistency=cached",
 	"workspaceFolder": "/workshop",
 	"forwardPorts": [
+		3000, // Todo UI port (using npm)
 		4000, // wash wasmCloud dashboard
 		8080, // Todo app port
 		22000 // cosmo wasmCloud dashboard
 	],
-  "postCreateCommand": "sudo chown -R vscode /home/vscode/.cosmo"
+	"postCreateCommand": "sudo chown -R vscode /home/vscode/.cosmo"
 }
