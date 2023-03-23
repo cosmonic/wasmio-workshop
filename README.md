@@ -30,6 +30,12 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 For a list of different methods of installation, please see the [Rust
 docs](https://www.rust-lang.org/tools/install)
 
+To follow this example and build own actors or providers, you will need to add the  `wasm32-unkown-unknown` compile target:
+
+```bash
+rustup target add wasm32-unknown-unknown
+```
+
 ### Installing Cosmo
 
 Installing cosmo is as easy as running the command below:
